@@ -14,12 +14,10 @@ import {
 	CompletionItemKind,
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
-	InitializeResult
+	InitializeResult,
 } from 'vscode-languageserver/node';
 
-import {
-	TextDocument
-} from 'vscode-languageserver-textdocument';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -54,15 +52,15 @@ connection.onInitialize((params: InitializeParams) => {
 			textDocumentSync: TextDocumentSyncKind.Incremental,
 			// Tell the client that this server supports code completion.
 			completionProvider: {
-				resolveProvider: true
-			}
-		}
+				resolveProvider: true,
+			},
+		},
 	};
 	if (hasWorkspaceFolderCapability) {
 		result.capabilities.workspace = {
 			workspaceFolders: {
-				supported: true
-			}
+				supported: true,
+			},
 		};
 	}
 	return result;
@@ -71,10 +69,13 @@ connection.onInitialize((params: InitializeParams) => {
 connection.onInitialized(() => {
 	if (hasConfigurationCapability) {
 		// Register for all configuration changes.
-		connection.client.register(DidChangeConfigurationNotification.type, undefined);
+		connection.client.register(
+			DidChangeConfigurationNotification.type,
+			undefined
+		);
 	}
 	if (hasWorkspaceFolderCapability) {
-		connection.workspace.onDidChangeWorkspaceFolders(_event => {
+		connection.workspace.onDidChangeWorkspaceFolders((_event) => {
 			connection.console.log('Workspace folder change event received.');
 		});
 	}
@@ -94,7 +95,7 @@ let globalSettings: ExampleSettings = defaultSettings;
 // Cache the settings of all open documents
 let documentSettings: Map<string, Thenable<ExampleSettings>> = new Map();
 
-connection.onDidChangeConfiguration(change => {
+connection.onDidChangeConfiguration((change) => {
 	if (hasConfigurationCapability) {
 		// Reset all cached document settings
 		documentSettings.clear();
@@ -116,7 +117,7 @@ function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
 	if (!result) {
 		result = connection.workspace.getConfiguration({
 			scopeUri: resource,
-			section: 'languageServerExample'
+			section: 'languageServerExample',
 		});
 		documentSettings.set(resource, result);
 	}
@@ -124,13 +125,23 @@ function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
 }
 
 // Only keep settings for open documents
-documents.onDidClose(e => {
+documents.onDidClose((e) => {
 	documentSettings.delete(e.document.uri);
 });
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
-documents.onDidChangeContent(change => {
+let indentifiers: string[];
+documents.onDidChangeContent((change) => {
+	const text = change.document.getText();
+	const identifier_pattern = /\blet ([^\s]+)/g;
+
+	let m: RegExpExecArray | null;
+	indentifiers = [];
+	while ((m = identifier_pattern.exec(text))) {
+		indentifiers.push(m[1]);
+	}
+
 	validateTextDocument(change.document);
 });
 
@@ -151,27 +162,27 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 			severity: DiagnosticSeverity.Warning,
 			range: {
 				start: textDocument.positionAt(m.index),
-				end: textDocument.positionAt(m.index + m[0].length)
+				end: textDocument.positionAt(m.index + m[0].length),
 			},
 			message: `${m[0]} is all uppercase.`,
-			source: 'ex'
+			source: 'ex',
 		};
 		if (hasDiagnosticRelatedInformationCapability) {
 			diagnostic.relatedInformation = [
 				{
 					location: {
 						uri: textDocument.uri,
-						range: Object.assign({}, diagnostic.range)
+						range: Object.assign({}, diagnostic.range),
 					},
-					message: 'Spelling matters'
+					message: 'Spelling matters',
 				},
 				{
 					location: {
 						uri: textDocument.uri,
-						range: Object.assign({}, diagnostic.range)
+						range: Object.assign({}, diagnostic.range),
 					},
-					message: 'Particularly for names'
-				}
+					message: 'Particularly for names',
+				},
 			];
 		}
 		diagnostics.push(diagnostic);
@@ -181,7 +192,54 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
 
-connection.onDidChangeWatchedFiles(_change => {
+/*async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+	// In this simple example we get the settings for every validate run.
+	let settings = await getDocumentSettings(textDocument.uri);
+
+	// The validator creates diagnostics for all uppercase words length 2 and more
+	let text = textDocument.getText();
+	let pattern = /\b[A-Z]{2,}\b/g;
+	let m: RegExpExecArray | null;
+
+	let problems = 0;
+	let diagnostics: Diagnostic[] = [];
+	while ((m = pattern.exec(text)) && problems < settings.maxNumberOfProblems) {
+		problems++;
+		let diagnostic: Diagnostic = {
+			severity: DiagnosticSeverity.Warning,
+			range: {
+				start: textDocument.positionAt(m.index),
+				end: textDocument.positionAt(m.index + m[0].length),
+			},
+			message: `${m[0]} is all uppercase.`,
+			source: 'ex',
+		};
+		if (hasDiagnosticRelatedInformationCapability) {
+			diagnostic.relatedInformation = [
+				{
+					location: {
+						uri: textDocument.uri,
+						range: Object.assign({}, diagnostic.range),
+					},
+					message: 'Spelling matters',
+				},
+				{
+					location: {
+						uri: textDocument.uri,
+						range: Object.assign({}, diagnostic.range),
+					},
+					message: 'Particularly for names',
+				},
+			];
+		}
+		diagnostics.push(diagnostic);
+	}
+
+	// Send the computed diagnostics to VSCode.
+	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+}*/
+
+connection.onDidChangeWatchedFiles((_change) => {
 	// Monitored files have change in VSCode
 	connection.console.log('We received an file change event');
 });
@@ -192,18 +250,29 @@ connection.onCompletion(
 		// The pass parameter contains the position of the text document in
 		// which code complete got requested. For the example we ignore this
 		// info and always provide the same completion items.
-		return [
+		//console.log(_textDocumentPosition);
+
+		let completionList: CompletionItem[] = [];
+		for (const item of indentifiers) {
+			completionList.push({
+				label: item,
+				kind: CompletionItemKind.Function,
+			});
+		}
+
+		return completionList;
+		/*return [
 			{
 				label: 'TypeScript',
 				kind: CompletionItemKind.Text,
-				data: 1
+				data: 1,
 			},
 			{
 				label: 'JavaScript',
 				kind: CompletionItemKind.Text,
-				data: 2
-			}
-		];
+				data: 2,
+			},
+		];*/
 	}
 );
 
