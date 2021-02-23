@@ -19,6 +19,7 @@ import {
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { parse } from './parser';
+import { WotFile } from './wot_file';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -30,6 +31,8 @@ let documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 let hasConfigurationCapability: boolean = false;
 let hasWorkspaceFolderCapability: boolean = false;
 let hasDiagnosticRelatedInformationCapability: boolean = false;
+
+let wotfile: WotFile;
 
 connection.onInitialize((params: InitializeParams) => {
 	let capabilities = params.capabilities;
@@ -66,7 +69,6 @@ connection.onInitialize((params: InitializeParams) => {
 	}
 
 	console.log('Starting LSP Server...');
-	parse();
 	return result;
 });
 
@@ -137,14 +139,7 @@ documents.onDidClose((e) => {
 // when the text document first opened or when its content has changed.
 let indentifiers: string[];
 documents.onDidChangeContent((change) => {
-	const text = change.document.getText();
-	const identifier_pattern = /\blet ([^\s]+)/g;
-
-	let m: RegExpExecArray | null;
-	indentifiers = [];
-	while ((m = identifier_pattern.exec(text))) {
-		indentifiers.push(m[1]);
-	}
+	wotfile = parse(change.document);
 
 	validateTextDocument(change.document);
 });
@@ -257,9 +252,9 @@ connection.onCompletion(
 		//console.log(_textDocumentPosition);
 
 		let completionList: CompletionItem[] = [];
-		for (const item of indentifiers) {
+		for (const item of wotfile.methodLookup()) {
 			completionList.push({
-				label: item,
+				label: item.name,
 				kind: CompletionItemKind.Function,
 			});
 		}

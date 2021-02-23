@@ -1,4 +1,39 @@
 grammar Wotpp;
-r  : 'let' ID ;         // match keyword hello followed by an identifier
-ID : [a-z]+ ;             // match lower-case identifiers
-WS : [ \t\r\n]+ -> skip ; // skip spaces, tabs, newlines
+
+IDENTIFIER
+	: [a-zA-Z_][a-zA-Z_0-9]*
+	;
+
+// String stuff
+BASIC_STRING
+	: '"' ( ~('\\'|'"') )* '"'
+    ;
+
+string
+	: BASIC_STRING
+	;
+
+// Function stuff
+fn
+	: 'let' fn_name expression
+	;
+
+fn_name 
+	: IDENTIFIER
+	;
+
+expression
+	: string
+	;
+
+statement
+	: fn
+	| expression
+	;
+
+document
+	: statement*
+	;
+
+// skip spaces, tabs, newlines
+WHITESPACE : [ \t\r\n]+ -> skip ; 
