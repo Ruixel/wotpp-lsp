@@ -50,14 +50,19 @@
 		"compile": "tsc -b",
 		"watch": "tsc -b -w",
 		"postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
-		"test": "sh ./scripts/e2e.sh"
+		"test": "sh ./scripts/e2e.sh",
+		"antlr": "antlr4ts -visitor .\\server\\src\\grammar\\Wotpp.g4"
 	},
 	"devDependencies": {
 		"@types/mocha": "^8.0.3",
-		"mocha": "^8.1.1",
 		"@types/node": "^12.12.0",
-		"eslint": "^6.4.0",
 		"@typescript-eslint/parser": "^2.3.0",
+		"antlr4ts-cli": "^0.5.0-alpha.4",
+		"eslint": "^6.4.0",
+		"mocha": "^8.1.1",
 		"typescript": "^4.0.2"
+	},
+	"dependencies": {
+		"antlr4ts": "^0.5.0-alpha.4"
 	}
 }

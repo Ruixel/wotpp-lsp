@@ -18,6 +18,7 @@ import {
 } from 'vscode-languageserver/node';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
+import { parse } from './parser';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -63,6 +64,9 @@ connection.onInitialize((params: InitializeParams) => {
 			},
 		};
 	}
+
+	console.log('Starting LSP Server...');
+	parse();
 	return result;
 });
 
