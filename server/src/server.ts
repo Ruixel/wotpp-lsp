@@ -246,32 +246,15 @@ connection.onDidChangeWatchedFiles((_change) => {
 // This handler provides the initial list of the completion items.
 connection.onCompletion(
 	(_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-		// The pass parameter contains the position of the text document in
-		// which code complete got requested. For the example we ignore this
-		// info and always provide the same completion items.
-		//console.log(_textDocumentPosition);
-
 		let completionList: CompletionItem[] = [];
-		for (const item of wotfile.methodLookup()) {
+		for (const item of wotfile.getMethods()) {
 			completionList.push({
 				label: item.name,
 				kind: CompletionItemKind.Function,
+				data: item.data,
 			});
 		}
-
 		return completionList;
-		/*return [
-			{
-				label: 'TypeScript',
-				kind: CompletionItemKind.Text,
-				data: 1,
-			},
-			{
-				label: 'JavaScript',
-				kind: CompletionItemKind.Text,
-				data: 2,
-			},
-		];*/
 	}
 );
 
@@ -279,6 +262,15 @@ connection.onCompletion(
 // the completion list.
 connection.onCompletionResolve(
 	(item: CompletionItem): CompletionItem => {
+		const method = wotfile.methodLookup(item.data - 1);
+		if (method) {
+			item.detail = method.info;
+			item.documentation = method.detail;
+		}
+
+		return item;
+
+		/*{
 		if (item.data === 1) {
 			item.detail = 'TypeScript details';
 			item.documentation = 'TypeScript documentation';
@@ -286,7 +278,7 @@ connection.onCompletionResolve(
 			item.detail = 'JavaScript details';
 			item.documentation = 'JavaScript documentation';
 		}
-		return item;
+		return item;*/
 	}
 );
 

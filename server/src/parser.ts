@@ -1,4 +1,8 @@
-import { CharStreams, CommonTokenStream } from 'antlr4ts';
+import {
+	CharStreams,
+	CommonTokenStream,
+	DiagnosticErrorListener,
+} from 'antlr4ts';
 import { ParseTreeWalker } from 'antlr4ts/tree/ParseTreeWalker';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
@@ -14,6 +18,7 @@ export function parse(file: TextDocument): WotFile {
 	const lexer = new WotppLexer(chars);
 	const tokenStream = new CommonTokenStream(lexer);
 	const parser = new WotppParser(tokenStream);
+	parser.addErrorListener(new DiagnosticErrorListener());
 
 	const tree = parser.document();
 	const wotfile = new WotFile();
