@@ -10,33 +10,43 @@ import {
 	Fn_invokeContext,
 } from './grammar/wotppParser';
 import { Method, MethodIdentifier, WotFile } from './wot_file';
+import Stack from './util/stack';
 
+// Implements the ANTLR4 listener class
+// The parser executes functions as it enters and leaves certain grammar rules
 export default class LSPListener implements WotppListener {
 	private _wotfile: WotFile;
 	private _currentFunction: Method;
+	private _functionStack: Stack<Method>;
 	private _diagnostics: Diagnostic[];
 
 	public constructor(wotfile: WotFile) {
 		this._wotfile = wotfile;
 		this._diagnostics = [];
 		this._currentFunction = { name: 'n/a' };
+		this._functionStack = new Stack<Method>();
 	}
 
 	enterFn(context: FnContext) {
-		this._currentFunction = {
+		const newFunc = {
 			name: context.fn_name().getToken(WotppParser.IDENTIFIER, 0).text,
 			params: [],
 		};
+		this._functionStack.push(newFunc);
 	}
 
+	// Finish function declaration, can now be registered
 	exitFn(context: FnContext) {
-		this._wotfile.registerMethod(this._currentFunction);
+		const func = this._functionStack.pop();
+		if (func?.value) {
+			this._wotfile.registerMethod(func.value);
+		}
 	}
 
+	// Store the parameters
 	enterFn_params(context: Fn_paramsContext) {
 		context.getTokens(WotppParser.IDENTIFIER).map((token) => {
-			this._currentFunction.params?.push(token.text);
-			//console.log(`args: ${token.text}`);
+			//this._currentFunction.params?.push(token.text);
 		});
 	}
 
@@ -47,6 +57,8 @@ export default class LSPListener implements WotppListener {
 			paramCount: 0,
 		};
 
+		// Do a lookup to check if the methods have been previously defined
+		// Doing this as it's parsing means that forward declarations are spotted as errors
 		if (this._wotfile.methodLookup(id) === undefined) {
 			const unknown_fn_error: Diagnostic = {
 				severity: DiagnosticSeverity.Error,

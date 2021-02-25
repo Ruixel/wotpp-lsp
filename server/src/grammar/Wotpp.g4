@@ -34,9 +34,18 @@ fn_invoke
 	: IDENTIFIER fn_args?
 	;
 
+block
+	: '{' (statement)* expression '}'
+	;
+
+concat
+	: expression '..' expression
+	;
+
 expression
 	: fn_invoke
 	| string
+	| block
 	;
 
 statement
