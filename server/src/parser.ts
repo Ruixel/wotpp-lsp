@@ -4,14 +4,25 @@ import {
 	DiagnosticErrorListener,
 } from 'antlr4ts';
 import { ParseTreeWalker } from 'antlr4ts/tree/ParseTreeWalker';
+import {
+	Diagnostic,
+	DiagnosticSeverity,
+	_Connection,
+	_LanguagesImpl,
+} from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
 import { WotppLexer } from './grammar/wotppLexer';
 import { WotppListener } from './grammar/wotppListener';
-import { WotppParser, DocumentContext, FnContext } from './grammar/wotppParser';
-import { WotFile } from './wot_file';
+import { WotppParser } from './grammar/wotppParser';
+import { WotFile, Method, MethodIdentifier } from './wot_file';
+import LSPListener from './LSPListener';
 
-export function parse(file: TextDocument): WotFile {
+export function parse(
+	file: TextDocument,
+	connection: _Connection,
+	wotfile: WotFile
+) {
 	const input = file.getText();
 	const chars = CharStreams.fromString(input);
 
@@ -21,19 +32,15 @@ export function parse(file: TextDocument): WotFile {
 	parser.addErrorListener(new DiagnosticErrorListener());
 
 	const tree = parser.document();
-	const wotfile = new WotFile();
-	console.log('hey');
+	wotfile.resetMethods();
 
-	class TestListener implements WotppListener {
-		enterFn(context: FnContext) {
-			wotfile.registerMethod(
-				context.fn_name().getToken(WotppParser.IDENTIFIER, 0).text
-			);
-		}
-	}
+	const listener = new LSPListener(wotfile);
+	ParseTreeWalker.DEFAULT.walk(listener as WotppListener, tree);
 
-	const listener: WotppListener = new TestListener();
-	ParseTreeWalker.DEFAULT.walk(listener, tree);
+	connection.sendDiagnostics({
+		uri: file.uri,
+		diagnostics: listener.getDiagnostics(),
+	});
 
 	return wotfile;
 }

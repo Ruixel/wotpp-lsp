@@ -15,15 +15,28 @@ string
 
 // Function stuff
 fn
-	: 'let' fn_name expression
+	: 'let' fn_name fn_params? expression
 	;
 
 fn_name 
 	: IDENTIFIER
 	;
 
+fn_params
+	: '(' IDENTIFIER ( ',' IDENTIFIER )* ')'
+	;
+
+fn_args
+	: '(' expression ( ',' expression )* ')'
+	;
+
+fn_invoke
+	: IDENTIFIER fn_args?
+	;
+
 expression
-	: string
+	: fn_invoke
+	| string
 	;
 
 statement

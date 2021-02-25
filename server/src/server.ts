@@ -85,6 +85,8 @@ connection.onInitialized(() => {
 			connection.console.log('Workspace folder change event received.');
 		});
 	}
+
+	wotfile = new WotFile();
 });
 
 // The example settings
@@ -139,9 +141,9 @@ documents.onDidClose((e) => {
 // when the text document first opened or when its content has changed.
 let indentifiers: string[];
 documents.onDidChangeContent((change) => {
-	wotfile = parse(change.document);
+	wotfile = parse(change.document, connection, wotfile);
 
-	validateTextDocument(change.document);
+	//validateTextDocument(change.document);
 });
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
@@ -247,6 +249,7 @@ connection.onDidChangeWatchedFiles((_change) => {
 connection.onCompletion(
 	(_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
 		let completionList: CompletionItem[] = [];
+		console.log(`Method size: ${wotfile.getMethods().length}`);
 		for (const item of wotfile.getMethods()) {
 			completionList.push({
 				label: item.name,
@@ -262,11 +265,11 @@ connection.onCompletion(
 // the completion list.
 connection.onCompletionResolve(
 	(item: CompletionItem): CompletionItem => {
-		const method = wotfile.methodLookup(item.data - 1);
+		/*const method = wotfile.methodLookup(item.data - 1);
 		if (method) {
 			item.detail = method.info;
 			item.documentation = method.detail;
-		}
+		}*/
 
 		return item;
 

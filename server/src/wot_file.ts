@@ -1,10 +1,11 @@
 import { UniquenessLevel } from 'vscode-languageserver';
 
-interface Method {
+export interface Method {
 	name: string;
+	params?: string[];
 	info?: string;
 	detail?: string;
-	data: number;
+	data?: number;
 }
 
 const intrinsic_methods: Method[] = [
@@ -66,26 +67,52 @@ const intrinsic_methods: Method[] = [
 	},
 ];
 
+export interface MethodIdentifier {
+	name: string;
+	paramCount: number;
+}
+
+function methodIdToString(methodId: MethodIdentifier) {
+	return methodId.name + '#' + methodId.paramCount;
+}
+
+function methodToString(method: Method) {
+	if (method.params === undefined) return method.name + '#0';
+	else return method.name + '#' + method.params?.length;
+}
+
 export class WotFile {
 	public fileUri: string;
 
 	private _methods: Method[] = intrinsic_methods;
+	private _methodMap = new Map<string, Method>();
 
-	public registerMethod(method_name: string) {
-		if (!(method_name in this._methods)) {
-			const newMethod: Method = {
-				name: method_name,
-				data: this._methods.length + 1,
-			};
-			this._methods[newMethod.data] = newMethod;
+	public registerMethod(method: Method) {
+		console.log(`Registering: ${methodToString(method)}`);
+
+		if (!this._methodMap.has(methodToString(method))) {
+			method.data = this._methods.length + 1;
+
+			this._methodMap.set(methodToString(method), method);
+			this._methods.push(method);
 		}
 	}
 
-	public methodLookup(itemNumber?: number): Method | null {
+	public resetMethods() {
+		this._methods = [];
+		this._methodMap.clear();
+	}
+
+	/*public methodLookup(itemNumber?: number): Method | null {
 		if (itemNumber && itemNumber < this._methods.length) {
 			return this._methods[itemNumber];
 		}
 		return null;
+	}*/
+
+	public methodLookup(id: MethodIdentifier): Method | undefined {
+		const name = methodIdToString(id);
+		return this._methodMap.get(name);
 	}
 
 	public getMethods() {
