@@ -15,8 +15,9 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { WotppLexer } from './grammar/wotppLexer';
 import { WotppListener } from './grammar/wotppListener';
 import { WotppParser } from './grammar/wotppParser';
-import { WotFile, Method, MethodIdentifier } from './wot_file';
+import { WotFile } from './wot_file';
 import LSPListener from './LSPListener';
+import WotppErrorListener from './ErrorListener';
 
 export function parse(
 	file: TextDocument,
@@ -29,7 +30,8 @@ export function parse(
 	const lexer = new WotppLexer(chars);
 	const tokenStream = new CommonTokenStream(lexer);
 	const parser = new WotppParser(tokenStream);
-	parser.addErrorListener(new DiagnosticErrorListener());
+	const errorListener = new WotppErrorListener();
+	parser.addErrorListener(errorListener);
 
 	const tree = parser.document();
 	wotfile.resetMethods();
@@ -37,9 +39,14 @@ export function parse(
 	const listener = new LSPListener(wotfile);
 	ParseTreeWalker.DEFAULT.walk(listener as WotppListener, tree);
 
+	const diagnostics: Diagnostic[] = [
+		...listener.getDiagnostics(),
+		...errorListener.getDiagnostics(),
+	];
+
 	connection.sendDiagnostics({
 		uri: file.uri,
-		diagnostics: listener.getDiagnostics(),
+		diagnostics,
 	});
 
 	return wotfile;

@@ -9,7 +9,7 @@ import {
 	Fn_paramsContext,
 	Fn_invokeContext,
 } from './grammar/wotppParser';
-import { Method, MethodIdentifier, WotFile } from './wot_file';
+import { Method, MethodIdentifier, WotFile, Parameter } from './wot_file';
 import Stack from './util/stack';
 
 // Implements the ANTLR4 listener class
@@ -18,6 +18,7 @@ export default class LSPListener implements WotppListener {
 	private _wotfile: WotFile;
 	private _currentFunction: Method;
 	private _functionStack: Stack<Method>;
+	//private _availableParameters: Stack<Parameter[]>;
 	private _diagnostics: Diagnostic[];
 
 	public constructor(wotfile: WotFile) {
@@ -25,6 +26,7 @@ export default class LSPListener implements WotppListener {
 		this._diagnostics = [];
 		this._currentFunction = { name: 'n/a' };
 		this._functionStack = new Stack<Method>();
+		//this._availableParameters = new Stack<Parameter[]>();
 	}
 
 	enterFn(context: FnContext) {
@@ -46,7 +48,10 @@ export default class LSPListener implements WotppListener {
 	// Store the parameters
 	enterFn_params(context: Fn_paramsContext) {
 		context.getTokens(WotppParser.IDENTIFIER).map((token) => {
-			//this._currentFunction.params?.push(token.text);
+			const new_param: Parameter = {
+				name: token.text,
+			};
+			this._functionStack.top?.value?.params?.push(new_param);
 		});
 	}
 

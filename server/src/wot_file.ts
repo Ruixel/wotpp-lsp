@@ -2,10 +2,14 @@ import { UniquenessLevel } from 'vscode-languageserver';
 
 export interface Method {
 	name: string;
-	params?: string[];
+	params?: Parameter[];
 	info?: string;
 	detail?: string;
 	data?: number;
+}
+
+export interface Parameter {
+	name: string;
 }
 
 const intrinsic_methods: Method[] = [
