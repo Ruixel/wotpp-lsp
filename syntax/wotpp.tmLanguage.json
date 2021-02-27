@@ -6,6 +6,13 @@
 			"include": "#keywords"
 		},
 		{
+			"include": "#block_comment"
+		},
+		{
+			"include": "#line_comment"
+		},
+
+		{
 			"include": "#strings"
 		}
 	],
@@ -18,6 +25,14 @@
 				}
 			]
 		},
+		"intrinsic_func": {
+			"patterns": [
+				{
+					"name": "entity.name.function",
+					"match": "\\b(error|log|source|file|run|eval)\\b"
+				}
+			]
+		},
 		"strings": {
 			"name": "string.quoted.double.wotpp",
 			"begin": "\"",
@@ -26,6 +41,24 @@
 				{
 					"name": "constant.character.escape.wotpp",
 					"match": "\\\\."
+				}
+			]
+		},
+		"block_comment": {
+			"patterns": [
+				{
+					"name": "comment.block.wotpp",
+					"begin": "#\\[",
+					"end": "\\]"
+				}
+			]
+		},
+		"line_comment": {
+			"patterns": [
+				{
+					"name": "comment.line.wotpp",
+					"begin": "#",
+					"end": "\n"
 				}
 			]
 		}

@@ -58,4 +58,15 @@ document
 	;
 
 // skip spaces, tabs, newlines
-WHITESPACE : [ \t\r\n]+ -> skip ; 
+WHITESPACE 
+	: [ \t\r\n]+ -> skip 
+	; 
+
+// Comment stuff
+BLOCK_COMMENT
+	: '#[' .*? ']' -> channel(HIDDEN)  // #[ multi-line comment ]
+	;
+
+LINE_COMMENT
+	: '#' .*? '\n' -> channel(HIDDEN)  // # comment
+	;
