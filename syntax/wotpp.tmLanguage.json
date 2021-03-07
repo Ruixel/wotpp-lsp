@@ -6,12 +6,14 @@
 			"include": "#keywords"
 		},
 		{
+			"include": "#intrinsic_functions"
+		},
+		{
 			"include": "#block_comment"
 		},
 		{
 			"include": "#line_comment"
 		},
-
 		{
 			"include": "#strings"
 		}
@@ -25,11 +27,11 @@
 				}
 			]
 		},
-		"intrinsic_func": {
+		"intrinsic_functions": {
 			"patterns": [
 				{
 					"name": "entity.name.function",
-					"match": "\\b(error|log|source|file|run|eval)\\b"
+					"match": "\\b(run|file|eval|assert|source|escape|pipe|error|log)\\b"
 				}
 			]
 		},
